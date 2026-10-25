@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <!--
+      Aira for Android — a real, installable APK companion.
+      Deliberately plain Xamarin.Android (no MAUI shell): one dark,
+      glass-flavoured chat screen backed by the same OpenAI REST path
+      as the desktop app. Debug builds are auto-signed with the
+      developer debug key, so the APK installs straight on a device.
+    -->
+
+    <PropertyGroup>
+        <TargetFramework>net8.0-android</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>AiraMobile</RootNamespace>
+        <AssemblyName>AiraMobile</AssemblyName>
+        <ApplicationId>com.aira.mobile</ApplicationId>
+        <ApplicationVersion>1</ApplicationVersion>
+        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <AndroidManifest>AndroidManifest.xml</AndroidManifest>
+        <AndroidPackageFormat>apk</AndroidPackageFormat>
+        <AndroidKeyStore>false</AndroidKeyStore>
+        <SupportedOSPlatformVersion>24</SupportedOSPlatformVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <InvariantGlobalization>false</InvariantGlobalization>
+        <SignAndroidAssembly>false</SignAndroidAssembly>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    </PropertyGroup>
+
+</Project>

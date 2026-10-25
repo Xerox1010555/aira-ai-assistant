@@ -1,0 +1,427 @@
+﻿<Window x:Class="AiraAssistant.UI.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        xmlns:vm="clr-namespace:AiraAssistant.UI.ViewModels"
+        xmlns:views="clr-namespace:AiraAssistant.UI.Views"
+        Title="Aira — Windows AI Assistant"
+        Height="800" Width="1240"
+        MinHeight="620" MinWidth="960"
+        WindowStyle="None"
+        AllowsTransparency="False"
+        ResizeMode="CanResize"
+        Background="{DynamicResource GlassBackdrop}"
+        Foreground="{DynamicResource Foreground}"
+        FontFamily="Segoe UI, Arial"
+        TextOptions.TextFormattingMode="Display"
+        UseLayoutRounding="True">
+    <shell:WindowChrome.WindowChrome>
+        <!-- Borderless VIP chrome: full control over the caption, native
+             drag + resize behaviour retained, no legacy aero glass. -->
+        <shell:WindowChrome CaptionHeight="46"
+                            ResizeBorderThickness="7"
+                            GlassFrameThickness="0"
+                            CornerRadius="0"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/UI/Themes/Modern.xaml" />
+                <ResourceDictionary Source="/UI/Themes/ChatBubble.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- All glass/theme brushes come from ThemeEngine at app level. -->
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <Grid x:Name="RootShell" RenderTransformOrigin="0.5,0.5">
+        <Grid.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform x:Name="RootScale" ScaleX="0.94" ScaleY="0.94" />
+                <TranslateTransform x:Name="RootShift" Y="26" />
+            </TransformGroup>
+        </Grid.RenderTransform>
+        <Grid.Triggers>
+            <!-- VIP entrance: fade + lift + settle scale; logo does a 360 spin -->
+            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                <BeginStoryboard>
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="RootShell" Storyboard.TargetProperty="Opacity"
+                                         From="0" To="1" Duration="0:0:0.5">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="RootScale"
+                                         Storyboard.TargetProperty="ScaleX"
+                                         From="0.94" To="1" Duration="0:0:0.55">
+                            <DoubleAnimation.EasingFunction>
+                                <BackEase EasingMode="EaseOut" Amplitude="0.35" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="RootScale"
+                                         Storyboard.TargetProperty="ScaleY"
+                                         From="0.94" To="1" Duration="0:0:0.55">
+                            <DoubleAnimation.EasingFunction>
+                                <BackEase EasingMode="EaseOut" Amplitude="0.35" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                        <DoubleAnimation Storyboard.TargetName="RootShift"
+                                         Storyboard.TargetProperty="Y"
+                                         From="26" To="0" Duration="0:0:0.55">
+                            <DoubleAnimation.EasingFunction>
+                                <CubicEase EasingMode="EaseOut" />
+                            </DoubleAnimation.EasingFunction>
+                        </DoubleAnimation>
+                    </Storyboard>
+                </BeginStoryboard>
+            </EventTrigger>
+        </Grid.Triggers>
+
+        <!-- Ambient aurora glows (theme-driven, pure depth) -->
+        <Border Width="480" Height="480" HorizontalAlignment="Left" VerticalAlignment="Top"
+                Margin="-180,-160,0,0" IsHitTestVisible="False"
+                Background="{DynamicResource AuroraBrushA}" />
+        <Border Width="520" Height="520" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                Margin="0,0,-200,-120" IsHitTestVisible="False"
+                Background="{DynamicResource AuroraBrushB}" />
+
+        <Grid Margin="10,8,10,10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="46" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- ============ Custom title bar (drag area = WindowChrome) ============ -->
+            <Grid Grid.Row="0">
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                    <Border Width="31" Height="31" CornerRadius="10"
+                            Background="{DynamicResource AccentGradientBrush}"
+                            BorderBrush="#4DFFFFFF" BorderThickness="1"
+                            Margin="13,0,10,0">
+                        <Border.RenderTransform>
+                            <RotateTransform x:Name="LogoSpin" CenterX="15.5" CenterY="15.5" Angle="0" />
+                        </Border.RenderTransform>
+                        <TextBlock Text="A" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                   Foreground="White" FontSize="16" FontWeight="Black" />
+                    </Border>
+                    <TextBlock Text="Aira" FontSize="14.5" FontWeight="SemiBold"
+                               VerticalAlignment="Center" />
+                    <TextBlock Text="Windows AI Assistant" FontSize="11"
+                               Foreground="{DynamicResource MutedForeground}"
+                               Margin="8,1,0,0" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <!-- Window controls + sessions/settings (interactive over caption) -->
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center"
+                            Margin="0,0,10,0">
+                    <Button Click="OnSessionsClick"
+                            ToolTip="Sessions (switch / rename / delete)"
+                            Style="{StaticResource BarIconButton}" Width="38"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Margin="0,0,6,0">
+                        <TextBlock Text="&#xE81C;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                    </Button>
+                    <Button Click="OnSettingsClick"
+                            ToolTip="Settings (provider, model, prompt, voice)"
+                            Style="{StaticResource BarIconButton}" Width="38"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True"
+                            Margin="0,0,16,0">
+                        <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="15" />
+                    </Button>
+                    <Button Click="OnMinimizeClick" ToolTip="Minimize"
+                            Style="{StaticResource BarIconButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                        <TextBlock Text="&#xE921;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+                    </Button>
+                    <Button Click="OnMaximizeToggleClick" ToolTip="Maximize / restore"
+                            Style="{StaticResource BarIconButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                        <TextBlock Text="&#xE922;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+                    </Button>
+                    <Button Click="OnCloseClick" ToolTip="Close"
+                            Style="{StaticResource BarIconButton}"
+                            shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                        <TextBlock Text="&#xE8BB;" FontFamily="Segoe MDL2 Assets" FontSize="11" />
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- ============ Body ============ -->
+            <Grid Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="312" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <!-- ===== Sidebar: floating glass card ===== -->
+                <Border Grid.Column="0" Style="{StaticResource GlassCard}"
+                        Background="{DynamicResource SideGlass}"
+                        CornerRadius="22" Padding="18"
+                        Margin="0,4,8,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Brand with gradient headline -->
+                        <StackPanel Grid.Row="0" Margin="4,4,0,12">
+                            <TextBlock Text="AIRA"
+                                       FontSize="34" FontWeight="Black"
+                                       Foreground="{DynamicResource BrandBrush}" />
+                            <TextBlock Text="Always-on Windows AI" FontSize="12"
+                                       Foreground="{DynamicResource MutedForeground}"
+                                       Margin="6,2,0,0" />
+                        </StackPanel>
+
+                        <!-- Session state capsule -->
+                        <Border Grid.Row="1" Style="{StaticResource StatusPill}"
+                                HorizontalAlignment="Left" Margin="4,2,0,14">
+                            <StackPanel Orientation="Horizontal">
+                                <Ellipse x:Name="StateDot" Width="9" Height="9" Margin="0,0,8,0"
+                                         VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                    <Ellipse.Style>
+                                        <Style TargetType="Ellipse">
+                                            <Setter Property="Fill" Value="{DynamicResource StateNeutral}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SessionState}" Value="Listening">
+                                                    <Setter Property="Fill" Value="{DynamicResource Success}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SessionState}" Value="Thinking">
+                                                    <Setter Property="Fill" Value="{DynamicResource Accent}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SessionState}" Value="Speaking">
+                                                    <Setter Property="Fill" Value="#FFFB923C" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding SessionState}" Value="Error">
+                                                    <Setter Property="Fill" Value="{DynamicResource Danger}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Ellipse.Style>
+                                </Ellipse>
+                                <TextBlock Text="{Binding SessionStateLabel}"
+                                           Foreground="{DynamicResource Foreground}"
+                                           FontSize="12" FontWeight="SemiBold" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Recent actions: glass rows -->
+                        <StackPanel Grid.Row="2" Margin="6,2,4,0">
+                            <TextBlock Text="RECENT ACTIONS"
+                                       Foreground="{DynamicResource MutedForeground}"
+                                       FontSize="10.5" FontWeight="SemiBold"
+                                       Margin="4,0,0,8" />
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding ToolLog}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border CornerRadius="11" Background="{DynamicResource RowGlass}"
+                                                    Padding="11,7" Margin="0,3">
+                                                <TextBlock Text="{Binding}"
+                                                           Foreground="#FFB9C4E0"
+                                                           FontSize="11"
+                                                           TextWrapping="Wrap" />
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+
+                        <!-- Footer: engine summary on glass rows -->
+                        <StackPanel Grid.Row="3" Margin="6,14,4,2">
+                            <Border CornerRadius="12" Background="{DynamicResource RowGlass}" Padding="12,9">
+                                <StackPanel>
+                                    <TextBlock Text="PROVIDER" Foreground="{DynamicResource MutedForeground}"
+                                               FontSize="9.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding ActiveProvider}" FontSize="13"
+                                               Margin="0,2,0,0" />
+                                </StackPanel>
+                            </Border>
+                            <Border CornerRadius="12" Background="{DynamicResource RowGlass}" Padding="12,9"
+                                    Margin="0,6,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="MODEL" Foreground="{DynamicResource MutedForeground}"
+                                               FontSize="9.5" FontWeight="SemiBold" />
+                                    <TextBlock Text="{Binding ActiveModel}" FontSize="13"
+                                               Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                            </Border>
+                            <TextBlock Margin="4,10,0,0"
+                                       Text="{Binding StatusText}"
+                                       Foreground="{DynamicResource MutedForeground}"
+                                       TextWrapping="Wrap" FontSize="10.5" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- ===== Chat panel: floating glass sheet ===== -->
+                <Border Grid.Column="1" Style="{StaticResource GlassCard}"
+                        Background="{DynamicResource ChatGlass}"
+                        CornerRadius="22" Padding="0"
+                        ClipToBounds="True" Margin="0,4,0,0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- Panel header -->
+                        <Border Grid.Row="0" Padding="20,13" BorderBrush="{DynamicResource GlassStroke}"
+                                BorderThickness="0,0,0,1" Background="#2A101B3E">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Conversation"
+                                               Foreground="{DynamicResource Foreground}"
+                                               FontSize="17" FontWeight="SemiBold" />
+                                    <TextBlock Text="Chat or press the mic to talk."
+                                               Foreground="{DynamicResource MutedForeground}"
+                                               FontSize="11.5" Margin="0,2,0,0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                    <Ellipse Width="10" Height="10" Margin="0,0,7,0"
+                                             ToolTip="Running with Administrator privileges">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="#7E8797" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsElevated}" Value="True">
+                                                        <Setter Property="Fill" Value="{DynamicResource Success}" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsElevated}" Value="False">
+                                                        <Setter Property="Fill" Value="{DynamicResource Danger}" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock VerticalAlignment="Center"
+                                               Foreground="{DynamicResource MutedForeground}" FontSize="11.5">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Text" Value="Standard user" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsElevated}" Value="True">
+                                                        <Setter Property="Text" Value="Administrator" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <!-- Chat log -->
+                        <ListBox Grid.Row="1"
+                                 x:Name="ChatList"
+                                 ItemsSource="{Binding Messages}"
+                                 ItemTemplate="{StaticResource ChatBubbleTemplate}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 Padding="8,10" />
+
+                        <!-- Composer -->
+                        <Border Grid.Row="2" Padding="16,13"
+                                BorderBrush="{DynamicResource GlassStroke}" BorderThickness="0,1,0,0"
+                                Background="#2A0E1730">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" Margin="0,0,12,0" VerticalAlignment="Center">
+                                    <TextBox x:Name="InputBox"
+                                             Style="{StaticResource ModernTextBox}"
+                                             Text="{Binding UserInput, UpdateSourceTrigger=PropertyChanged}"
+                                             AcceptsReturn="False"
+                                             KeyDown="OnInputKeyDown" />
+                                    <TextBlock Text="{Binding PartialTranscript}"
+                                               Foreground="{DynamicResource AssistantNameColor}"
+                                               FontStyle="Italic"
+                                               FontSize="11"
+                                               Margin="8,5,0,0"
+                                               TextTrimming="CharacterEllipsis"
+                                               Visibility="{Binding PartialTranscript, Converter={StaticResource NullToVisibility}}" />
+                                </StackPanel>
+
+                                <Button Grid.Column="1"
+                                        Content="Send"
+                                        Style="{StaticResource ModernButton}"
+                                        Command="{Binding SendCommand}"
+                                        Width="92" VerticalAlignment="Center" />
+
+                                <!-- Mic zone: gradient circle + halo ring + spin on toggle -->
+                                <Grid Grid.Column="2" Width="52" Height="52" Margin="8,0,0,0"
+                                      VerticalAlignment="Center">
+                                    <Ellipse x:Name="MicRing"
+                                             Stroke="{DynamicResource HaloBrush}" StrokeThickness="3.5"
+                                             Opacity="0">
+                                        <Ellipse.RenderTransform>
+                                            <ScaleTransform x:Name="MicRingScale" ScaleX="1" ScaleY="1" />
+                                        </Ellipse.RenderTransform>
+                                    </Ellipse>
+                                    <Button x:Name="MicButton"
+                                            Command="{Binding ToggleListeningCommand}"
+                                            ToolTip="Toggle voice session"
+                                            Content="&#xE720;"
+                                            FontFamily="Segoe MDL2 Assets" FontSize="19" Foreground="White"
+                                            Cursor="Hand"
+                                            Background="{DynamicResource AccentGradientBrush}">
+                                        <Button.RenderTransform>
+                                            <RotateTransform x:Name="MicSpin" Angle="0" />
+                                        </Button.RenderTransform>
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Grid Background="Transparent">
+                                                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                                            CornerRadius="26"
+                                                            BorderBrush="#66FFFFFF" BorderThickness="1">
+                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                                          VerticalAlignment="Center" />
+                                                    </Border>
+                                                </Grid>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Bd" Property="Opacity" Value="0.92" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="Bd" Property="Opacity" Value="0.8" />
+                                                    </Trigger>
+                                                    <Trigger Property="IsEnabled" Value="False">
+                                                        <Setter Property="Opacity" Value="0.5" />
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </Grid>
+
+                                <Button Grid.Column="3"
+                                        Margin="8,0,0,0"
+                                        Content="Clear"
+                                        Style="{StaticResource GhostButton}"
+                                        Command="{Binding ClearCommand}"
+                                        Width="82" VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

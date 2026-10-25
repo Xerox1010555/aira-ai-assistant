@@ -1,0 +1,19 @@
+# build outputs and local artifacts
+dist/
+bin/
+obj/
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+
+# env & secrets
+.env
+appsettings.Local.json
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,57 @@
+﻿<Window x:Class="AiraAssistant.UI.Views.SessionsDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Aira — Sessions"
+        Height="460" Width="600"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Background="{DynamicResource WindowBackground}"
+        Foreground="{DynamicResource Foreground}"
+        FontFamily="Segoe UI"
+        UseLayoutRounding="True">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ListView Grid.Row="0"
+                  ItemsSource="{Binding Sessions}"
+                  SelectedItem="{Binding Selected, Mode=TwoWay}"
+                  Background="{DynamicResource PanelBackground}"
+                  Foreground="{DynamicResource Foreground}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Session" Width="330"
+                                    DisplayMemberBinding="{Binding Title}" />
+                    <GridViewColumn Header="Last activity" Width="165">
+                        <GridViewColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding Updated, StringFormat=g}"
+                                           Foreground="{StaticResource MutedForeground}" />
+                            </DataTemplate>
+                        </GridViewColumn.CellTemplate>
+                    </GridViewColumn>
+                </GridView>
+            </ListView.View>
+        </ListView>
+
+        <TextBlock Grid.Row="1" Text="{Binding StatusText}"
+                   Foreground="{StaticResource MutedForeground}" FontSize="12"
+                   Margin="0,10,0,0" />
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button Content="Open" Command="{Binding OpenCommand}"
+                    Style="{StaticResource ModernButton}" Width="80" Margin="0,0,8,0" />
+            <Button Content="New" Command="{Binding NewCommand}"
+                    Style="{StaticResource ModernButton}" Width="80" Margin="0,0,8,0" />
+            <Button Content="Rename" Command="{Binding RenameCommand}"
+                    Style="{StaticResource GhostButton}" Width="80" Margin="0,0,8,0" />
+            <Button Content="Delete" Command="{Binding DeleteCommand}"
+                    Style="{StaticResource DangerButton}" Width="80" Margin="0,0,8,0" />
+            <Button Content="Close" IsCancel="True"
+                    Style="{StaticResource GhostButton}" Width="80" />
+        </StackPanel>
+    </Grid>
+</Window>
